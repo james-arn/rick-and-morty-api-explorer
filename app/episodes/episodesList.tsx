@@ -3,20 +3,20 @@
 import { useState } from 'react';
 import { Box, Button } from '@mui/material';
 import { useQuery } from '@apollo/client';
-import { CharactersData } from '@/graphql/characters/types';
-import { GET_CHARACTERS } from '@/graphql/characters/queries';
+import { EpisodesData } from '@/graphql/episodes/types';
+import { GET_EPISODES } from '@/graphql/episodes/queries';
 import { useApollo } from '@/lib/apolloHelpers';
 import DataTable from '@/components/DataTable';
 
-interface CharacterListProps {
+interface EpisodeListProps {
     initialPage: number;
     initialApolloState: any;
 }
 
-const CharacterList: React.FC<CharacterListProps> = ({ initialPage, initialApolloState }) => {
+const EpisodeList: React.FC<EpisodeListProps> = ({ initialPage, initialApolloState }) => {
     const [page, setPage] = useState(initialPage);
     const client = useApollo({ __APOLLO_STATE__: initialApolloState });
-    const { data, error, loading } = useQuery<CharactersData>(GET_CHARACTERS, {
+    const { data, error, loading } = useQuery<EpisodesData>(GET_EPISODES, {
         variables: { page },
         client,
         fetchPolicy: 'cache-first',
@@ -24,22 +24,19 @@ const CharacterList: React.FC<CharacterListProps> = ({ initialPage, initialApoll
 
     if (error) return <p>Error: {error.message}</p>;
 
-    const columns = ['name', 'species', 'origin.name', 'location.name', 'actions'];
+    const columns = ['name', 'air_date', 'episode', 'actions'];
     const columnHeaders: Record<typeof columns[number], string> = {
         name: 'Name',
-        species: 'Species',
-        'origin.name': 'Origin Name',
-        'location.name': 'Location Name',
+        air_date: 'Air Date',
+        episode: 'Episode',
         actions: 'Actions'
     };
 
-    const totalEntries = data?.characters.info.count || 0;
-    const entriesPerPage = data?.characters.results.length || 0;
+    const totalEntries = data?.episodes.info.count || 0;
+    const entriesPerPage = data?.episodes.results.length || 0;
 
-    const mappedData = data?.characters.results.map(character => ({
-        ...character,
-        'origin.name': character.origin.name,
-        'location.name': character.location.name,
+    const mappedData = data?.episodes.results.map(episode => ({
+        ...episode,
         actions: (
             <Button variant="outlined" color="success">
                 View
@@ -50,7 +47,7 @@ const CharacterList: React.FC<CharacterListProps> = ({ initialPage, initialApoll
     return (
         <div>
             <Box sx={{ paddingBottom: 2 }}>
-                <h1>Characters</h1>
+                <h1>Episodes</h1>
             </Box>
             <DataTable
                 data={mappedData}
@@ -66,4 +63,4 @@ const CharacterList: React.FC<CharacterListProps> = ({ initialPage, initialApoll
     );
 };
 
-export default CharacterList;
+export default EpisodeList;
