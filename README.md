@@ -55,6 +55,7 @@ I built this project with the following approach:
 3. Tests - I didn't manage to have time to test but I would of added unit tests with Jest and E2E testing with Playwright. 
 4. Custom pagination in apollo rather than the default page size.
 5. Better error handling.
+6. Mobile responsiveness - didn't optimise fully. 
 
 ## Deployed site
 https://rick-and-morty-api-explorer-klsv1bwt1-jamesarns-projects.vercel.app/
