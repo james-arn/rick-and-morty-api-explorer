@@ -56,3 +56,6 @@ I built this project with the following approach:
 4. Custom pagination in apollo rather than the default page size.
 5. Better error handling.
 
+## Deployed site
+https://rick-and-morty-api-explorer-klsv1bwt1-jamesarns-projects.vercel.app/
+
