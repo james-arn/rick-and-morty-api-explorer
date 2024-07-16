@@ -1,52 +1,89 @@
 "use client";
 
-import { useState, useEffect } from 'react';
-import { DataGrid, GridColDef } from '@mui/x-data-grid';
-import { Button } from '@mui/material';
-import client from '@/lib/apolloClient';
+import { useState } from 'react';
+import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Button, Skeleton, Box, Stack } from '@mui/material';
+import { useQuery } from '@apollo/client';
+import { CharactersData } from '@/graphql/characters/types';
 import { GET_CHARACTERS } from '@/graphql/characters/queries';
-import { Location } from '@/graphql/locations/types';
+import { useApollo } from '@/lib/apolloHelpers';
 
 interface CharacterListProps {
-    initialData: any;
     initialPage: number;
+    initialApolloState: any;
 }
 
-const columns: GridColDef[] = [
-    { field: 'id', headerName: 'ID', width: 90 },
-    { field: 'name', headerName: 'Name', width: 150 },
-    { field: 'species', headerName: 'Species', width: 150 },
-    { field: 'origin', headerName: 'Origin', width: 150, valueGetter: (origin: Location) => origin.name },
-    { field: 'location', headerName: 'Location', width: 150, valueGetter: (location: Location) => location.name },
-];
-
-const CharacterList: React.FC<CharacterListProps> = ({ initialData, initialPage }) => {
+const CharacterList: React.FC<CharacterListProps> = ({ initialPage, initialApolloState }) => {
     const [page, setPage] = useState(initialPage);
-    const [data, setData] = useState(initialData);
+    const client = useApollo({ __APOLLO_STATE__: initialApolloState });
+    const { data, error, loading } = useQuery<CharactersData>(GET_CHARACTERS, {
+        variables: { page },
+        client,
+        fetchPolicy: 'cache-first',
+    });
 
-    useEffect(() => {
-        const fetchData = async () => {
-            const { data } = await client.query({
-                query: GET_CHARACTERS,
-                variables: { page },
-            });
-            setData(data);
-        };
-        fetchData();
-    }, [page]);
+    if (error) return <p>Error: {error.message}</p>;
+
+    const totalEntries = data?.characters.info.count || 0;
+    const entriesPerPage = data?.characters.results.length || 0;
+    const startEntry = (page - 1) * entriesPerPage + 1;
+    const endEntry = startEntry + entriesPerPage - 1;
 
     return (
         <div>
-            <h1>Characters</h1>
-            <div style={{ height: 400, width: '100%' }}>
-                <DataGrid rows={data.characters.results} columns={columns} />
+            <Box sx={{ paddingBottom: 2 }}>
+                <h1>Characters</h1>
+            </Box>
+            <TableContainer component={Paper} sx={{ marginBottom: 2 }}>
+                <Table>
+                    <TableHead>
+                        <TableRow>
+                            <TableCell sx={{ fontWeight: 'bold' }}>Name</TableCell>
+                            <TableCell sx={{ fontWeight: 'bold' }}>Species</TableCell>
+                            <TableCell sx={{ fontWeight: 'bold' }}>Origin</TableCell>
+                            <TableCell sx={{ fontWeight: 'bold' }}>Location</TableCell>
+                            <TableCell sx={{ fontWeight: 'bold' }}>Actions</TableCell>
+                        </TableRow>
+                    </TableHead>
+                    <TableBody>
+                        {loading ? (
+                            Array.from(new Array(5)).map((_, index) => (
+                                <TableRow key={index} sx={{ '&:nth-of-type(odd)': { backgroundColor: '#f9f9f9' } }}>
+                                    <TableCell><Skeleton /></TableCell>
+                                    <TableCell><Skeleton /></TableCell>
+                                    <TableCell><Skeleton /></TableCell>
+                                    <TableCell><Skeleton /></TableCell>
+                                    <TableCell><Skeleton /></TableCell>
+                                </TableRow>
+                            ))
+                        ) : (
+                            data?.characters.results.map((character) => (
+                                <TableRow key={character.id} sx={{ '&:nth-of-type(odd)': { backgroundColor: '#f9f9f9' } }}>
+                                    <TableCell>{character.name}</TableCell>
+                                    <TableCell>{character.species}</TableCell>
+                                    <TableCell>{character.origin.name}</TableCell>
+                                    <TableCell>{character.location.name}</TableCell>
+                                    <TableCell>
+                                        <Button variant="outlined" color="success" sx={{ margin: '0 5px' }}>
+                                            View
+                                        </Button>
+                                    </TableCell>
+                                </TableRow>
+                            ))
+                        )}
+                    </TableBody>
+                </Table>
+            </TableContainer>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0' }}>
+                <span>Showing {startEntry} to {endEntry} of {totalEntries} entries</span>
+                <Stack direction="row" spacing={2}>
+                    <Button onClick={() => setPage(page - 1)} disabled={!data?.characters.info.prev} variant="outlined" color="success">
+                        Previous
+                    </Button>
+                    <Button onClick={() => setPage(page + 1)} disabled={!data?.characters.info.next} variant="outlined" color="success">
+                        Next
+                    </Button>
+                </Stack>
             </div>
-            <Button onClick={() => setPage(page - 1)} disabled={!data.characters.info.prev}>
-                Previous
-            </Button>
-            <Button onClick={() => setPage(page + 1)} disabled={!data.characters.info.next}>
-                Next
-            </Button>
         </div>
     );
 };

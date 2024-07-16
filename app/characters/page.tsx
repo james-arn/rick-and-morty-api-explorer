@@ -1,6 +1,7 @@
-import client from '@/lib/apolloClient';
 import CharacterList from './characterList';
 import { GET_CHARACTERS } from '@/graphql/characters/queries';
+import { initializeApollo } from '@/lib/apolloClient';
+import { Container } from '@mui/material';
 
 export const dynamic = 'force-dynamic'; // Ensure server-side rendering
 
@@ -10,22 +11,23 @@ interface CharactersPageProps {
     };
 }
 
-async function fetchPageData(page: number) {
-    const { data } = await client.query({
-        query: GET_CHARACTERS,
-        variables: { page },
-    });
-    return data;
-}
-
 export default async function CharactersPage({ searchParams }: CharactersPageProps) {
     const page = parseInt(searchParams.page as string || '1', 10);
-    const initialData = await fetchPageData(page);
+    const apolloClient = initializeApollo();
+
+    await apolloClient.query({
+        query: GET_CHARACTERS,
+        variables: { page, pageSize: 5 },
+    });
+
+    const initialApolloState = JSON.parse(JSON.stringify(apolloClient.cache.extract()));
 
     return (
-        <CharacterList
-            initialData={initialData}
-            initialPage={page}
-        />
+        <Container maxWidth="lg" sx={{ padding: '2rem' }}>
+            <CharacterList
+                initialPage={page}
+                initialApolloState={initialApolloState}
+            />
+        </Container>
     );
 }
